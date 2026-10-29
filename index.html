@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>How It's Made: Your Phone Photo</title>
+  <meta name="description" content="Scroll through every step a phone camera takes, from light hitting the lens to a photo in your gallery, processed live from your own camera." />
+  <meta name="theme-color" content="#07080b" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2307080b'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%237cf0d4' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23ffb454'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <canvas id="gl" aria-hidden="true"></canvas>
+
+  <div class="progress" aria-hidden="true"><div class="progress__bar"></div></div>
+
+  <div class="hud" role="toolbar" aria-label="Camera controls">
+    <span class="hud__phase" id="hud-phase">Start</span>
+    <button class="hud__btn" id="btn-freeze" type="button" aria-pressed="false" title="Freeze the frame">Freeze</button>
+    <button class="hud__btn" id="btn-source" type="button" title="Switch between your camera and the sample scene">Use camera</button>
+  </div>
+
+  <main>
+    <!-- 00 Intro -->
+    <section class="scene scene--intro" data-scene="intro" style="--len: 1.6">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker">How it's made</p>
+          <h1>From light to<br /><span class="grad">your gallery</span></h1>
+          <p class="lede">Every photo your phone takes passes through a lens, millions of light buckets, a high-speed data link and a dedicated image processor in about a tenth of a second. Scroll to slow it down and watch each step happen to <em>you</em>, live.</p>
+          <div class="cta">
+            <button class="btn btn--primary" id="btn-camera" type="button">Use my camera</button>
+            <button class="btn" id="btn-sample" type="button">Use a sample scene</button>
+          </div>
+          <p class="note" id="camera-note">Everything is processed on your device. Nothing is uploaded.</p>
+          <p class="scroll-hint">Scroll to begin <span aria-hidden="true">↓</span></p>
+        </div>
+        <div class="visual"><div class="slot" data-slot></div></div>
+      </div>
+    </section>
+
+    <!-- 01 Lens -->
+    <section class="scene" data-scene="lens" data-phase="optics" style="--len: 3">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">01</span> Optics</p>
+          <h2>Light meets the lens</h2>
+          <div class="steps">
+            <p class="step">Light bouncing off you enters a lens no wider than a pea. Inside sit <strong>five to seven plastic elements</strong>, each moulded into a precise aspheric curve.</p>
+            <p class="step">Together they bend every ray from one point on your face onto one point of the sensor, a few millimetres behind. Phone apertures are fixed, typically <strong>f/1.7 to f/2.2</strong>.</p>
+            <p class="step">To focus, a <strong>voice coil motor</strong> (a tiny magnet and coil) slides the whole lens stack by a fraction of a millimetre until the picture is sharp.</p>
+          </div>
+        </div>
+        <div class="visual visual--split">
+          <div class="diagram">
+            <svg viewBox="0 0 600 260" class="svg-lens" aria-label="Cross section of a phone camera lens">
+              <line x1="0" y1="130" x2="600" y2="130" class="axis" />
+              <g class="rays">
+                <path class="ray" d="M0 45 L190 45 L520 130" />
+                <path class="ray" d="M0 88 L190 88 L520 130" />
+                <path class="ray" d="M0 130 L520 130" />
+                <path class="ray" d="M0 172 L190 172 L520 130" />
+                <path class="ray" d="M0 215 L190 215 L520 130" />
+              </g>
+              <g id="lens-group">
+                <rect x="160" y="22" width="200" height="216" rx="10" class="barrel" />
+                <ellipse class="lens-el" cx="185" cy="130" rx="11" ry="92" />
+                <ellipse class="lens-el" cx="215" cy="130" rx="8" ry="80" />
+                <ellipse class="lens-el" cx="243" cy="130" rx="9" ry="72" />
+                <ellipse class="lens-el" cx="272" cy="130" rx="7" ry="78" />
+                <ellipse class="lens-el" cx="302" cy="130" rx="10" ry="88" />
+                <ellipse class="lens-el" cx="333" cy="130" rx="7" ry="96" />
+                <rect x="170" y="6" width="180" height="12" rx="3" class="coil" />
+                <rect x="170" y="242" width="180" height="12" rx="3" class="coil" />
+              </g>
+              <rect x="514" y="62" width="12" height="136" rx="2" class="sensor-bar" />
+              <text x="520" y="222" class="lbl" text-anchor="middle">Sensor</text>
+              <text x="260" y="0" dy="-6" class="lbl lbl--vcm" text-anchor="middle">Voice coil motor</text>
+              <text x="40" y="30" class="lbl">Light</text>
+            </svg>
+          </div>
+          <div class="slot slot--small" data-slot></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 OIS + IR -->
+    <section class="scene" data-scene="ois" data-phase="optics" style="--len: 3">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">02</span> Optics</p>
+          <h2>Filtering and steadying</h2>
+          <div class="steps">
+            <p class="step">Silicon sees <strong>infrared</strong> light our eyes can't, which would turn skin and plants a strange pink. A thin <strong>IR-cut filter</strong> glass in front of the sensor blocks it.</p>
+            <p class="step">Your hands shake a little all the time. At a 1/30 s shutter speed that is enough to smear the whole picture.</p>
+            <p class="step"><strong>Optical image stabilisation</strong> reads a gyroscope thousands of times a second and uses magnets to push the lens the opposite way, cancelling the shake before light ever lands.</p>
+          </div>
+        </div>
+        <div class="visual visual--split">
+          <div class="diagram">
+            <svg viewBox="0 0 600 260" class="svg-ois" aria-label="Lens module with IR filter and stabiliser magnets">
+              <rect x="70" y="40" width="300" height="180" rx="16" class="module" />
+              <g id="ois-lens">
+                <circle cx="220" cy="130" r="62" class="ois-lens" />
+                <circle cx="220" cy="130" r="40" class="ois-lens ois-lens--in" />
+              </g>
+              <g class="magnets">
+                <rect x="88" y="104" width="22" height="52" rx="4" class="magnet" />
+                <rect x="330" y="104" width="22" height="52" rx="4" class="magnet" />
+                <rect x="194" y="56" width="52" height="16" rx="4" class="magnet" />
+                <rect x="194" y="188" width="52" height="16" rx="4" class="magnet" />
+              </g>
+              <g id="ir-filter">
+                <rect x="410" y="40" width="26" height="180" rx="4" class="ir-glass" />
+                <text x="423" y="238" class="lbl" text-anchor="middle">IR-cut filter</text>
+              </g>
+              <rect x="500" y="70" width="14" height="120" rx="2" class="sensor-bar" />
+              <text x="507" y="210" class="lbl" text-anchor="middle">Sensor</text>
+              <g id="gyro" class="gyro">
+                <rect x="88" y="232" width="74" height="20" rx="4" />
+                <text x="125" y="246" text-anchor="middle">GYRO</text>
+              </g>
+              <text x="220" y="30" class="lbl" text-anchor="middle">OIS magnets + lens</text>
+            </svg>
+          </div>
+          <div class="slot slot--small" data-slot></div>
+          <div class="chips">
+            <span class="chip" id="chip-ir">IR filter: off</span>
+            <span class="chip" id="chip-ois">OIS: off</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 Photosites -->
+    <section class="scene" data-scene="photosites" data-phase="sensor" style="--len: 3">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">03</span> Sensor</p>
+          <h2>Millions of light buckets</h2>
+          <div class="steps">
+            <p class="step">The image lands on a CMOS sensor: a grid of <strong>12 to 50 million photodiodes</strong>, each about 1 micrometre wide, a hundredth of a human hair.</p>
+            <p class="step">A tiny <strong>microlens</strong> on top of each one funnels light into it. Each photon that hits knocks an electron loose, and the electrons pile up in a well while the shutter is open.</p>
+            <p class="step">Brighter spots fill their wells further. That is all a sensor measures: <strong>how much light</strong>, not what colour.</p>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="slot" data-slot></div>
+          <div class="readout" id="well-readout"><span>Centre photosite</span><strong id="well-e">0</strong> electrons of 6,000</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 Bayer -->
+    <section class="scene" data-scene="bayer" data-phase="sensor" style="--len: 3.2">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">04</span> Sensor</p>
+          <h2>The colour mosaic</h2>
+          <div class="steps">
+            <p class="step">To capture colour, each photosite gets a tiny filter that lets through only <strong>red, green or blue</strong>.</p>
+            <p class="step">They are laid out in a <strong>Bayer pattern</strong>: every 2×2 square has one red, one blue and two greens, because our eyes are most sensitive to green.</p>
+            <p class="step">So each pixel knows just <strong>one colour</strong>. Two thirds of the colour information is missing. This green checkerboard is what the sensor actually recorded of you.</p>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="slot" data-slot></div>
+          <div class="bayer-key" aria-hidden="true"><i class="r">R</i><i class="g">G</i><i class="g">G</i><i class="b">B</i></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 Readout + ADC -->
+    <section class="scene" data-scene="adc" data-phase="sensor" style="--len: 3.6">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">05</span> Sensor</p>
+          <h2>Charge becomes numbers</h2>
+          <div class="steps">
+            <p class="step">When exposure ends, the sensor is read <strong>row by row</strong>, top to bottom, in about 10 to 30 ms. This is the "rolling shutter" that bends fast-moving things.</p>
+            <p class="step">Each well's charge becomes a voltage, amplified by the <strong>analog gain</strong>. That is what your camera's ISO setting changes.</p>
+            <p class="step">An <strong>analog-to-digital converter</strong> turns each voltage into a 10-bit number from 0 to 1023. Below are real values from your frame right now. Note the black level: even pure black reads about 64.</p>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="slot" data-slot></div>
+          <div class="adc" id="adc">
+            <div class="adc__grid" id="adc-grid"></div>
+            <div class="adc__bits"><span id="adc-val">0</span> = <code id="adc-bin">0000000000</code></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 MIPI -->
+    <section class="scene" data-scene="mipi" data-phase="transfer" style="--len: 4">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">06</span> Transfer</p>
+          <h2>The data highway</h2>
+          <div class="steps">
+            <p class="step">The sensor is its own chip. Its numbers travel to the phone's main processor (the SoC) over <strong>MIPI CSI-2</strong>: one clock lane and up to four data lanes, each a pair of wires carrying about 2.5 Gbit/s.</p>
+            <p class="step">Each row is wrapped in a <strong>packet</strong>: a header saying "this is RAW10, this many bytes", the pixel data with four 10-bit pixels packed into five bytes, and a checksum to catch errors.</p>
+            <p class="step">Traffic also flows the other way. Over a slow two-wire <strong>I²C</strong> bus, the processor tells the sensor what exposure time, gain and frame rate to use next, every single frame.</p>
+            <p class="step">A 12 MP sensor at 30 frames per second sends <strong>3.6 billion bits every second</strong> down these lanes.</p>
+          </div>
+        </div>
+        <div class="visual visual--split">
+          <div class="diagram">
+            <svg viewBox="0 0 640 300" class="svg-mipi" aria-label="Sensor connected to the processor by MIPI lanes">
+              <rect x="10" y="40" width="120" height="180" rx="12" class="chip-box chip-box--sensor" />
+              <text x="70" y="124" text-anchor="middle" class="chip-name">Image</text>
+              <text x="70" y="146" text-anchor="middle" class="chip-name">sensor</text>
+              <rect x="510" y="40" width="120" height="180" rx="12" class="chip-box chip-box--soc" />
+              <text x="570" y="124" text-anchor="middle" class="chip-name">SoC</text>
+              <text x="570" y="146" text-anchor="middle" class="chip-sub">ISP</text>
+              <g class="lanes">
+                <g class="lane" data-lane="CLK"><line x1="130" y1="62" x2="510" y2="62" /><line x1="130" y1="68" x2="510" y2="68" /><text x="320" y="56" text-anchor="middle">CLK</text></g>
+                <g class="lane" data-lane="D0"><line x1="130" y1="96" x2="510" y2="96" /><line x1="130" y1="102" x2="510" y2="102" /><text x="140" y="90">D0</text></g>
+                <g class="lane" data-lane="D1"><line x1="130" y1="130" x2="510" y2="130" /><line x1="130" y1="136" x2="510" y2="136" /><text x="140" y="124">D1</text></g>
+                <g class="lane" data-lane="D2"><line x1="130" y1="164" x2="510" y2="164" /><line x1="130" y1="170" x2="510" y2="170" /><text x="140" y="158">D2</text></g>
+                <g class="lane" data-lane="D3"><line x1="130" y1="198" x2="510" y2="198" /><line x1="130" y1="204" x2="510" y2="204" /><text x="140" y="192">D3</text></g>
+              </g>
+              <g id="packets"></g>
+              <g class="i2c">
+                <line x1="130" y1="258" x2="510" y2="258" />
+                <line x1="130" y1="266" x2="510" y2="266" />
+                <text x="320" y="292" text-anchor="middle">I²C control (SDA + SCL)</text>
+              </g>
+              <g id="i2c-msgs"></g>
+            </svg>
+          </div>
+          <div class="packet" id="packet" aria-label="Anatomy of a CSI-2 packet">
+            <span class="pk pk--sync">SoT</span>
+            <span class="pk pk--hdr">ID 0x2B<br /><small>RAW10</small></span>
+            <span class="pk pk--hdr">WC<br /><small id="pk-wc">0</small></span>
+            <span class="pk pk--hdr">ECC</span>
+            <span class="pk pk--data" id="pk-data">pixel data</span>
+            <span class="pk pk--crc">CRC</span>
+            <span class="pk pk--sync">EoT</span>
+          </div>
+          <div class="slot slot--small" data-slot></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07 ISP clean-up -->
+    <section class="scene" data-scene="clean" data-phase="isp" style="--len: 4">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">07</span> Image signal processor</p>
+          <h2>Cleaning up the raw data</h2>
+          <div class="steps">
+            <p class="step">The SoC has a dedicated <strong>image signal processor</strong> (ISP), hardware that runs billions of operations per second on every frame. First it subtracts the <strong>black level</strong>, and the grey fog lifts.</p>
+            <p class="step"><strong>Lens shading correction</strong>: the lens delivers less light to the corners, so the ISP brightens them back to even.</p>
+            <p class="step"><strong>Defect correction</strong>: a few photosites are "hot" and always read bright. The ISP spots pixels far brighter than all their neighbours and replaces them.</p>
+            <p class="step"><strong>Noise reduction</strong> smooths random grain by averaging neighbours, but avoids averaging across edges so detail stays sharp.</p>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="slot" data-slot></div>
+          <div class="chips chips--steps">
+            <span class="chip" data-chip="0">Black level</span>
+            <span class="chip" data-chip="1">Lens shading</span>
+            <span class="chip" data-chip="2">Defect pixels</span>
+            <span class="chip" data-chip="3">Denoise</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 Demosaic -->
+    <section class="scene" data-scene="demosaic" data-phase="isp" style="--len: 3.2">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">08</span> Image signal processor</p>
+          <h2>Filling in the colours</h2>
+          <div class="steps">
+            <p class="step">Each pixel still knows only one colour. <strong>Demosaicing</strong> estimates the two missing ones from the neighbours around it.</p>
+            <p class="step">The simple version averages the nearest pixels of each colour. Real ISPs follow edges so they don't smear colour across them or leave zippered fringes.</p>
+            <p class="step">Now every pixel has red, green and blue. But the picture looks <strong>green and washed out</strong>. Raw sensor colour isn't what our eyes see yet.</p>
+          </div>
+        </div>
+        <div class="visual"><div class="slot" data-slot></div></div>
+      </div>
+    </section>
+
+    <!-- 09 Colour -->
+    <section class="scene" data-scene="color" data-phase="isp" style="--len: 4">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">09</span> Image signal processor</p>
+          <h2>Making it look right</h2>
+          <div class="steps">
+            <p class="step"><strong>Auto white balance</strong> works out the colour of the light and scales red and blue so white looks white.</p>
+            <p class="step">A <strong>colour correction matrix</strong>, tuned in a lab for this exact sensor, maps its colours to standard ones and restores saturation.</p>
+            <p class="step">A <strong>tone curve</strong> adds contrast and fits the scene's huge brightness range onto a screen.</p>
+            <p class="step"><strong>Sharpening</strong> boosts fine edges, making up for softness from the lens and demosaicing.</p>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="slot" data-slot></div>
+          <div class="tune">
+            <div class="tune__row"><span>WB gains</span><code id="wb-r">R ×1.00</code><code id="wb-b">B ×1.00</code></div>
+            <svg viewBox="0 0 100 100" class="curve" aria-label="Tone curve"><rect x="0" y="0" width="100" height="100" /><line x1="0" y1="100" x2="100" y2="0" class="curve__ref" /><path id="tone-path" d="M0 100 L100 0" /></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 Multi-frame -->
+    <section class="scene" data-scene="stack" data-phase="isp" style="--len: 3.4">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">10</span> Computational photography</p>
+          <h2>Many frames, one photo</h2>
+          <div class="steps">
+            <p class="step">In dim light each photosite catches few photons, and the random <strong>noise</strong> takes over once the image is brightened.</p>
+            <p class="step">So phones keep a rolling buffer of frames, even before you press the shutter, and <strong>merge a burst of them</strong>. Averaging N frames cuts the noise by √N.</p>
+            <p class="step">The same trick powers <strong>HDR</strong> and night mode: short and long exposures are aligned and blended. Move while it stacks and you'll see why alignment matters.</p>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="slot" data-slot></div>
+          <div class="wipe-labels"><span>Merged <b id="stack-n">1</b> frames</span><span>Single frame</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 JPEG + storage -->
+    <section class="scene" data-scene="jpeg" data-phase="output" style="--len: 4.6">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">11</span> Encoding</p>
+          <h2>Squeezing it into a file</h2>
+          <div class="steps">
+            <p class="step">The encoder splits the photo into <strong>brightness (Y)</strong> and two <strong>colour-difference</strong> channels (Cb, Cr).</p>
+            <p class="step">Our eyes notice detail in brightness far more than in colour, so colour is stored at <strong>quarter resolution</strong> (4:2:0).</p>
+            <p class="step">The image is cut into <strong>8×8 blocks</strong>, and a discrete cosine transform turns each into frequencies: smooth areas collapse into a few numbers in the corner.</p>
+            <p class="step"><strong>Quantisation</strong> throws away the fine frequencies you won't miss. Lower the quality and the blocks show. The file size here comes from your browser's real JPEG encoder.</p>
+            <p class="step">The numbers are compressed, tagged with <strong>EXIF</strong> metadata (time, exposure, ISO) and written to flash storage. Phones today often use HEIF, which follows the same ideas with smarter maths.</p>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="slot" data-slot></div>
+          <div class="file">
+            <div class="file__row"><span>Quality</span><strong id="jpeg-q">92</strong></div>
+            <div class="file__row"><span>File size</span><strong id="jpeg-size">…</strong></div>
+            <div class="file__row"><span>Raw size</span><strong id="raw-size">…</strong></div>
+            <div class="file__exif" id="exif"></div>
+            <div class="storage"><div class="storage__chip">UFS flash</div><div class="storage__file" id="storage-file">IMG.JPG</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 Gallery + display -->
+    <section class="scene" data-scene="display" data-phase="output" style="--len: 3.6">
+      <div class="stage">
+        <div class="copy">
+          <p class="kicker"><span class="num">12</span> Display</p>
+          <h2>Back to light</h2>
+          <div class="steps">
+            <p class="step">Open the gallery and the JPEG is <strong>decoded</strong> back into pixels, the reverse of everything you just scrolled through.</p>
+            <p class="step">The GPU scales it to fit the screen, and the display controller refreshes the panel <strong>60 to 120 times</strong> a second.</p>
+            <p class="step">Look closely and each screen pixel is three tiny <strong>red, green and blue lights</strong>. From a normal distance, they blend back into you.</p>
+          </div>
+          <div class="cta">
+            <button class="btn btn--primary" id="btn-download" type="button">Save my processed photo</button>
+          </div>
+        </div>
+        <div class="visual">
+          <div class="phone">
+            <div class="phone__bar"><span>Gallery</span></div>
+            <div class="phone__grid" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="slot slot--phone" data-slot></div>
+            <div class="phone__grid" aria-hidden="true"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="outro">
+      <h2>About 100 milliseconds, start to finish.</h2>
+      <p>Light, lens, photosites, colour filters, analog-to-digital conversion, a multi-gigabit link, an image processor, an encoder, flash storage and a display. Your phone runs all of this up to 60 times a second just for the viewfinder.</p>
+      <p class="fine">How this demo works: browsers never hand out true sensor data, because the camera feed has already been processed by your device. This page undoes that processing (it removes the gamma curve, re-applies a Bayer mosaic, lens shading, black level, hot pixels and photon noise) to rebuild a realistic raw frame, then runs its own ISP forward, all on your GPU with WebGL. Nothing leaves your device.</p>
+      <button class="btn" id="btn-top" type="button">Back to the start</button>
+    </section>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

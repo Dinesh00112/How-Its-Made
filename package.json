@@ -1,0 +1,26 @@
+{
+  "name": "how-its-made",
+  "version": "0.1.0",
+  "description": "Scroll-driven explainer of how a phone camera turns light into a gallery photo, processed live from your camera.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dinesh00112/how-its-made.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dinesh00112/how-its-made/issues"
+  },
+  "homepage": "https://github.com/dinesh00112/how-its-made#readme",
+  "dependencies": {
+    "animejs": "^4.5.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.7"
+  },
+  "private": true,
+  "type": "module"
+}
