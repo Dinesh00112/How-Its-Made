@@ -42,11 +42,20 @@ function end(tl) {
 const bayer = (x, y) => ((x & 1) === 0 && (y & 1) === 0 ? 'r' : (x & 1) === 1 && (y & 1) === 1 ? 'b' : 'g');
 
 export const scenes = {
+  outro: {
+    label: 'Done',
+    params: {},
+    build(tl, el) {
+      tl.add($$(el, '.outro > *'), { opacity: [0, 1], translateY: [24, 0], duration: 160, delay: stagger(70), ease: 'outQuad' }, 40);
+      end(tl);
+    },
+    render() {},
+  },
+
   intro: {
     label: 'Start',
     params: {},
-    build(tl, el) {
-      tl.add($$(el, '.copy > *'), { opacity: [1, 0], translateY: [0, -30], duration: 300, delay: stagger(20) }, 650);
+    build(tl) {
       end(tl);
     },
     render({ pipe, draw }) {
@@ -394,8 +403,17 @@ function formatBytes(n) {
   return n > 1e6 ? `${(n / 1e6).toFixed(2)} MB` : `${Math.round(n / 1000)} KB`;
 }
 
+// The whole experience is one fixed screen. Page scroll only moves a playhead `u` measured in
+// "length units" (the --len of each scene). Scenes fade in and out one after another, and a
+// scene's timeline only runs while it is fully visible.
+const FADE = 0.3; // length units spent fading in or out
+const SCROLL_PER_UNIT = 0.8; // screens of scrolling per length unit
+
+export const view = { u: 0, total: 1, target: 0 };
+
 export function buildScenes() {
   const list = [];
+  let cum = 0;
   for (const el of document.querySelectorAll('.scene')) {
     const def = scenes[el.dataset.scene];
     if (!def) continue;
@@ -404,28 +422,68 @@ export function buildScenes() {
     const tl = timeline();
     def.build(tl, el, params);
     tl.seek(0);
-    list.push({ el, def, params, slot: el.querySelector('[data-slot]'), tl, progress: 0 });
+    const len = parseFloat(el.style.getPropertyValue('--len')) || 3;
+    list.push({ el, def, params, slot: el.querySelector('[data-slot]'), tl, len, cum, progress: 0, opacity: -1 });
+    cum += len;
   }
+  view.total = cum;
+  list.forEach((s, i) => {
+    s.fadeIn = i === 0 ? 0 : Math.min(0.2, FADE / s.len);
+    s.fadeOut = i === list.length - 1 ? 0 : Math.min(0.2, FADE / s.len);
+  });
+  document.documentElement.style.setProperty('--scroll-len', String(cum * SCROLL_PER_UNIT));
   return list;
 }
 
-// Progress of a pinned section: 0 when its top reaches the top of the viewport,
-// 1 when its bottom reaches the bottom.
-export function scrollProgress(el) {
-  const r = el.getBoundingClientRect();
-  const span = r.height - innerHeight;
-  return span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : r.top < 0 ? 1 : 0;
+// Playhead the page is scrolled to, in length units.
+export function scrollUnits() {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  return max > 0 ? Math.min(1, Math.max(0, scrollY / max)) * view.total : 0;
 }
 
-// Ease each timeline towards its scroll position. Frame-rate independent, so it stays
-// smooth on 120 Hz screens and still lands on time on slow devices.
+export function scrollFraction() {
+  return view.total ? view.u / view.total : 0;
+}
+
+export function scrollToScene(list, name, behavior = 'smooth') {
+  const s = list.find((x) => x.def === scenes[name]);
+  if (!s) return;
+  const max = document.documentElement.scrollHeight - innerHeight;
+  scrollTo({ top: ((s.cum + 0.02) / view.total) * max, behavior });
+}
+
+const smooth = (x) => x * x * (3 - 2 * x);
+
+// Ease the playhead towards the scroll position, then place every scene on it. Frame-rate
+// independent, so it stays smooth on 120 Hz screens and still lands on time on slow devices.
 export function driveScenes(list, dt) {
-  const k = CATCH_UP === Infinity ? 1 : 1 - Math.exp(-CATCH_UP * dt);
-  for (const s of list) {
-    const target = scrollProgress(s.el);
-    const diff = target - s.progress;
-    if (Math.abs(diff) < 1e-5) continue;
-    s.progress = Math.abs(diff) < 5e-4 ? target : s.progress + diff * k;
-    s.tl.seek(s.progress * s.tl.duration);
+  view.target = scrollUnits();
+  const diff = view.target - view.u;
+  if (Math.abs(diff) > 1e-5) {
+    const k = CATCH_UP === Infinity ? 1 : 1 - Math.exp(-CATCH_UP * dt);
+    view.u = Math.abs(diff) < 2e-4 ? view.target : view.u + diff * k;
   }
+  let active = null;
+  for (const s of list) {
+    const local = (view.u - s.cum) / s.len;
+    let opacity = 0;
+    if (local > -0.001 && local < 1.001) {
+      const fin = s.fadeIn ? smooth(Math.min(1, Math.max(0, local / s.fadeIn))) : 1;
+      const fout = s.fadeOut ? smooth(Math.min(1, Math.max(0, (1 - local) / s.fadeOut))) : 1;
+      opacity = Math.min(fin, fout);
+    }
+    const run = Math.min(1, Math.max(0, (local - s.fadeIn) / (1 - s.fadeIn - s.fadeOut)));
+    if (run !== s.progress) {
+      s.progress = run;
+      s.tl.seek(run * s.tl.duration);
+    }
+    if (opacity !== s.opacity) {
+      s.opacity = opacity;
+      s.el.style.opacity = opacity.toFixed(3);
+      s.el.style.visibility = opacity > 0.002 ? 'visible' : 'hidden';
+      s.el.style.pointerEvents = opacity > 0.6 ? 'auto' : 'none';
+    }
+    if (opacity > 0.002 && (!active || opacity > active.opacity)) active = s;
+  }
+  return active;
 }

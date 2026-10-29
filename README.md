@@ -1,6 +1,6 @@
 # How It's Made: your phone photo
 
-A scroll-driven explainer of how a phone camera turns light into the photo in your gallery. Every stage is computed live from your own selfie or laptop camera (or a generated sample scene) on the GPU, and the animation is tied to scroll: scroll forward to play, stop to freeze, scroll back to rewind.
+A scroll-driven explainer of how a phone camera turns light into the photo in your gallery. Every stage is computed live from your own selfie or laptop camera (or a generated sample scene) on the GPU, and the animation is tied to scroll: the whole experience stays pinned to one screen, and scrolling only scrubs it like a video. Scroll forward to play, stop to freeze, scroll back to rewind.
 
 ## The 12 scenes
 
@@ -21,7 +21,7 @@ A scroll-driven explainer of how a phone camera turns light into the photo in yo
 
 ## How it works
 
-- **anime.js v4** builds one timeline per pinned section. The render loop seeks each timeline to its scroll position with frame-rate-independent easing, so motion stays smooth and exactly reversible.
+- **anime.js v4** builds one timeline per scene. Every scene is a fixed full-screen stage; page scroll only moves one playhead, which the render loop eases towards with frame-rate-independent smoothing. Scenes fade in and out one after another and each timeline runs while its scene is fully visible, so motion stays smooth and exactly reversible.
 - **WebGL2** runs a small ISP as a chain of fragment shaders (`src/gl/shaders.js`): raw simulation, clean-up, bilinear demosaic, colour, sharpening, frame stacking, and a real forward/inverse 8×8 DCT with libjpeg quantisation tables.
 - **A caveat:** browsers never expose true sensor data, because the camera feed has already been processed by the device. The page undoes that processing (inverse gamma, re-applied Bayer mosaic, lens shading, black level, hot pixels, photon and read noise) to rebuild a realistic raw frame, then runs its own pipeline forward. The page says so too.
 - Nothing is uploaded. The camera needs HTTPS (or `localhost`).

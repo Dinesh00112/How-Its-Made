@@ -301,6 +301,7 @@ uniform float u_blur;
 uniform float u_ir;
 uniform float u_planes;
 uniform float u_bright;
+uniform float u_fade;
 uniform vec2 u_cover;     // crop so the image fills the slot without stretching
 
 vec3 view(sampler2D tex, float mode, float enc, vec2 uv) {
@@ -402,5 +403,5 @@ void main() {
   vec2 q = abs(v_uv * u_slot - u_slot * 0.5) - (u_slot * 0.5 - u_radius);
   float sd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_radius;
   float alpha = clamp(0.5 - sd, 0.0, 1.0);
-  o = vec4(col * alpha, alpha);
+  o = vec4(col * alpha, alpha) * u_fade;
 }`;

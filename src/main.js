@@ -2,7 +2,7 @@ import './style.css';
 import { animate } from 'animejs';
 import { Pipeline } from './gl/pipeline.js';
 import { Source } from './source.js';
-import { buildScenes, driveScenes, scrollProgress } from './scenes.js';
+import { buildScenes, driveScenes, scrollFraction, scrollToScene } from './scenes.js';
 
 const canvas = document.getElementById('gl');
 const note = document.getElementById('camera-note');
@@ -26,7 +26,6 @@ const scenes = buildScenes();
 
 // Page-wide progress bar, seeked alongside the scenes.
 const progressBar = animate('.progress__bar', { scaleX: [0, 1], ease: 'linear', duration: 1000, autoplay: false });
-const main = document.querySelector('main');
 
 // ---------- Camera controls ----------
 
@@ -59,7 +58,7 @@ function useSample() {
 btnCamera.addEventListener('click', useCamera);
 btnSample.addEventListener('click', () => {
   useSample();
-  scrollBy({ top: innerHeight * 0.8, behavior: 'smooth' });
+  scrollToScene(scenes, 'lens');
 });
 btnSource.addEventListener('click', () => (source.kind === 'camera' ? useSample() : useCamera()));
 btnFreeze.addEventListener('click', () => {
@@ -129,8 +128,8 @@ function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min(0.25, (now - (lastNow || now)) / 1000);
   lastNow = now;
-  driveScenes(scenes, dt);
-  progressBar.seek(scrollProgress(main) * 1000);
+  const active = driveScenes(scenes, dt);
+  progressBar.seek(scrollFraction() * 1000);
   if (!pipe || !source.ready) return;
   const time = now / 1000;
   frame++;
@@ -153,25 +152,16 @@ function loop(now) {
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   const focus = source.kind === 'camera' ? [0.5, 0.56] : [0.3, 0.22];
-  const vh = innerHeight;
-  let active = null;
-  let best = 0;
   for (const s of scenes) {
-    const sr = s.el.getBoundingClientRect();
-    const overlap = Math.min(sr.bottom, vh) - Math.max(sr.top, 0);
-    if (overlap > best) {
-      best = overlap;
-      active = s;
-    }
-    if (!s.slot) continue;
+    if (!s.slot || s.opacity < 0.002) continue;
     const rect = s.slot.getBoundingClientRect();
-    if (rect.bottom < 0 || rect.top > vh || rect.width < 2) continue;
+    if (rect.width < 2) continue;
     s.def.render({
       pipe,
       el: s.el,
       time,
       focus,
-      draw: (v) => pipe.display(rect, dpr, canvas.height, v),
+      draw: (v) => pipe.display(rect, dpr, canvas.height, { ...v, fade: s.opacity }),
       readEvery: (n, fn) => frame % n === 0 && fn(),
       encodeJpeg,
     }, s.params);

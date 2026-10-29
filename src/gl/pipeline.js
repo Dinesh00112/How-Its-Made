@@ -155,7 +155,7 @@ export class Pipeline {
       u_size: [this.w, this.h], u_slot: [w, h], u_radius: (v.radius ?? 18) * dpr,
       u_zoom: v.zoom ?? 1, u_center: v.center ?? [0.5, 0.5], u_shift: v.shift ?? [0, 0],
       u_grid: v.grid ?? 0, u_gridStep: v.gridStep ?? 1, u_wells: v.wells ?? 0, u_scan: v.scan ?? -1, u_subpix: v.subpix ?? 0,
-      u_blur: v.blur ?? 0, u_ir: v.ir ?? 0, u_planes: v.planes ?? 0, u_bright: v.bright ?? 1, u_cover: cover,
+      u_blur: v.blur ?? 0, u_ir: v.ir ?? 0, u_planes: v.planes ?? 0, u_bright: v.bright ?? 1, u_fade: v.fade ?? 1, u_cover: cover,
     });
     draw(gl);
   }

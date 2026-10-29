@@ -382,11 +382,13 @@
       </div>
     </section>
 
-    <section class="outro">
+    <section class="scene scene--outro" data-scene="outro" data-phase="output" style="--len: 1.6">
+      <div class="outro">
       <h2>About 100 milliseconds, start to finish.</h2>
       <p>Light, lens, photosites, colour filters, analog-to-digital conversion, a multi-gigabit link, an image processor, an encoder, flash storage and a display. Your phone runs all of this up to 60 times a second just for the viewfinder.</p>
       <p class="fine">How this demo works: browsers never hand out true sensor data, because the camera feed has already been processed by your device. This page undoes that processing (it removes the gamma curve, re-applies a Bayer mosaic, lens shading, black level, hot pixels and photon noise) to rebuild a realistic raw frame, then runs its own ISP forward, all on your GPU with WebGL. Nothing leaves your device.</p>
       <button class="btn" id="btn-top" type="button">Back to the start</button>
+      </div>
     </section>
   </main>
 

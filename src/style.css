@@ -42,7 +42,8 @@ body {
   pointer-events: none;
 }
 
-main { position: relative; }
+/* The page is only a scroll track: every scene is a fixed full-screen stage on top of it. */
+main { position: relative; height: calc(var(--scroll-len, 40) * 100vh); height: calc(var(--scroll-len, 40) * 100svh); }
 
 /* ---------- Scroll progress + HUD ---------- */
 
@@ -99,8 +100,12 @@ main { position: relative; }
 /* ---------- Scenes ---------- */
 
 .scene {
-  position: relative;
-  height: calc(var(--len, 3) * 100vh);
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 .scene[data-phase='optics'], .hud[data-phase='optics'] { --accent: var(--optics); }
 .scene[data-phase='sensor'], .hud[data-phase='sensor'] { --accent: var(--sensor); }
@@ -109,10 +114,7 @@ main { position: relative; }
 .scene[data-phase='output'], .hud[data-phase='output'] { --accent: var(--output); }
 
 .stage {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  height: 100svh;
+  height: 100%;
   display: grid;
   grid-template-columns: minmax(300px, 0.85fr) 1.15fr;
   gap: clamp(24px, 4vw, 64px);
@@ -375,16 +377,13 @@ h2 { font-size: clamp(30px, 3.6vw, 52px); }
 .scene--intro .stage { grid-template-columns: 1fr 1fr; }
 .scene--intro .copy { max-width: 620px; }
 
+.scene--outro { display: grid; place-items: center; }
 .outro {
-  position: relative;
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 80px clamp(20px, 8vw, 140px);
+  padding: 72px clamp(20px, 8vw, 140px) 40px;
   max-width: 980px;
-  margin: 0 auto;
-  background: var(--bg);
 }
 .outro h2 { font-size: clamp(32px, 5vw, 64px); }
 .outro p { color: var(--ink-2); font-size: 19px; }
